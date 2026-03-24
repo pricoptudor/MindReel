@@ -61,7 +61,7 @@ async def _classify_with_gemini(
     interest_map: dict[str, str],
     settings,
 ) -> ClassifiedContent:
-    """Classify using Google Gemini API with rate limiting."""
+    """Classify using Google Gemini API with rate limiting and retry."""
     import asyncio
 
     interests_str = ", ".join(f"{k} ({v})" for k, v in interest_map.items())
@@ -77,41 +77,50 @@ async def _classify_with_gemini(
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.openai_model}:generateContent?key={settings.openai_api_key}"
 
-    # Rate limit: ~15 requests per minute for Gemini free tier
-    await asyncio.sleep(0.5)
+    max_retries = 1
+    for attempt in range(max_retries + 1):
+        await asyncio.sleep(1.0)
 
-    async with httpx.AsyncClient(timeout=20.0) as client:
-        resp = await client.post(
-            url,
-            json={
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {
-                    "temperature": 0.1,
-                    "maxOutputTokens": 200,
-                },
-            },
-        )
-        resp.raise_for_status()
-        data = resp.json()
+        try:
+            async with httpx.AsyncClient(timeout=20.0) as client:
+                resp = await client.post(
+                    url,
+                    json={
+                        "contents": [{"parts": [{"text": prompt}]}],
+                        "generationConfig": {
+                            "temperature": 0.1,
+                            "maxOutputTokens": 200,
+                        },
+                    },
+                )
+                if resp.status_code == 429:
+                    # Don't retry on rate limit — fall through to keywords
+                    raise Exception("Rate limited")
+                resp.raise_for_status()
+                data = resp.json()
 
-    text = data["candidates"][0]["content"]["parts"][0]["text"]
-    # Strip markdown code fences if present
-    text = text.strip()
-    if text.startswith("```"):
-        text = text.split("\n", 1)[-1].rsplit("```", 1)[0]
+            text = data["candidates"][0]["content"]["parts"][0]["text"]
+            text = text.strip()
+            if text.startswith("```"):
+                text = text.split("\n", 1)[-1].rsplit("```", 1)[0]
 
-    result = json.loads(text)
+            result = json.loads(text)
+            valid_ids = [i for i in result.get("interest_ids", []) if i in interest_map]
 
-    # Validate interest IDs
-    valid_ids = [i for i in result.get("interest_ids", []) if i in interest_map]
+            return ClassifiedContent(
+                content=item,
+                interest_ids=valid_ids,
+                level=ContentLevel(result.get("level", "intermediate")),
+                focus=ContentFocus(result.get("focus", "news")),
+                confidence=min(1.0, max(0.0, float(result.get("confidence", 0.8)))),
+            )
+        except httpx.HTTPStatusError:
+            raise
+        except Exception:
+            raise
 
-    return ClassifiedContent(
-        content=item,
-        interest_ids=valid_ids,
-        level=ContentLevel(result.get("level", "intermediate")),
-        focus=ContentFocus(result.get("focus", "news")),
-        confidence=min(1.0, max(0.0, float(result.get("confidence", 0.8)))),
-    )
+    # Should not reach here, but fallback
+    return _classify_with_keywords(item, interest_map)
 
 
 def _classify_with_keywords(

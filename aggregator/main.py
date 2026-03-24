@@ -19,6 +19,9 @@ from aggregator.connectors import (
     ArxivConnector,
     RssConnector,
     HackerNewsConnector,
+    DevtoConnector,
+    WikipediaConnector,
+    PodcastConnector,
 )
 from aggregator.classifier import classify_content
 from aggregator.storage import store_content, fetch_user_interests, fetch_user_sub_interests
@@ -26,7 +29,7 @@ from aggregator.storage import store_content, fetch_user_interests, fetch_user_s
 app = FastAPI(
     title="MindReel Aggregator",
     description="Content aggregation and classification service",
-    version="1.0.0",
+    version="1.1.0",
 )
 
 # Connector registry
@@ -36,6 +39,9 @@ CONNECTORS = {
     SourceType.ARXIV: ArxivConnector(),
     SourceType.RSS: RssConnector(),
     SourceType.HACKERNEWS: HackerNewsConnector(),
+    SourceType.DEVTO: DevtoConnector(),
+    SourceType.WIKIPEDIA: WikipediaConnector(),
+    SourceType.PODCAST: PodcastConnector(),
 }
 
 

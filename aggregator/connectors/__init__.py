@@ -4,6 +4,9 @@ from .reddit import RedditConnector
 from .arxiv import ArxivConnector
 from .rss import RssConnector
 from .hackernews import HackerNewsConnector
+from .devto import DevtoConnector
+from .wikipedia import WikipediaConnector
+from .podcast import PodcastConnector
 
 __all__ = [
     "BaseConnector",
@@ -12,4 +15,7 @@ __all__ = [
     "ArxivConnector",
     "RssConnector",
     "HackerNewsConnector",
+    "DevtoConnector",
+    "WikipediaConnector",
+    "PodcastConnector",
 ]
