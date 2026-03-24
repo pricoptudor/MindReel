@@ -1,16 +1,15 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '@/lib/store';
 import { FeedList } from '@/components/FeedList';
 
 export default function FeedDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { feeds, feedContent } = useAppStore();
+  const { feeds, getContentForFeed } = useAppStore();
 
   const feed = feeds.find((f) => f.id === id);
-  const items = feedContent[id || ''] || feedContent['all'] || [];
+  const items = getContentForFeed(id || 'all');
 
   return (
     <>

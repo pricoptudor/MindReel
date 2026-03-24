@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useAppStore } from '@/lib/store';
 import { InterestPill } from '@/components/InterestPill';
 
@@ -33,6 +34,7 @@ function SettingsRow({ icon, label, subtitle }: { icon: string; label: string; s
 }
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { interests, feeds, likedIds, savedIds } = useAppStore();
 
   return (
@@ -68,13 +70,19 @@ export default function ProfileScreen() {
         <View className="mb-6">
           <View className="flex-row items-center justify-between px-4 mb-3">
             <Text className="text-white text-lg font-bold">My Interests</Text>
-            <Pressable>
+            <Pressable onPress={() => router.push('/interests/')}>
               <Text className="text-brand-400 text-sm">Edit</Text>
             </Pressable>
           </View>
           <View className="flex-row flex-wrap px-4">
             {interests.map((interest) => (
-              <InterestPill key={interest.id} name={interest.name} color={interest.color} selected />
+              <InterestPill
+                key={interest.id}
+                name={interest.name}
+                color={interest.color}
+                selected
+                onPress={() => router.push(`/interests/${interest.id}`)}
+              />
             ))}
           </View>
         </View>
@@ -83,7 +91,7 @@ export default function ProfileScreen() {
         <View className="mb-6">
           <View className="flex-row items-center justify-between px-4 mb-3">
             <Text className="text-white text-lg font-bold">My Feeds</Text>
-            <Pressable>
+            <Pressable onPress={() => router.push('/feed-config/')}>
               <Text className="text-brand-400 text-sm">Manage</Text>
             </Pressable>
           </View>

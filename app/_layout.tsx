@@ -62,6 +62,11 @@ function RootLayoutNav() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: true }} />
         <Stack.Screen name="feed/[id]" options={{ headerShown: true }} />
+        <Stack.Screen name="interests/index" options={{ headerShown: true }} />
+        <Stack.Screen name="interests/edit" options={{ headerShown: true }} />
+        <Stack.Screen name="interests/[id]" options={{ headerShown: true }} />
+        <Stack.Screen name="feed-config/index" options={{ headerShown: true }} />
+        <Stack.Screen name="feed-config/edit" options={{ headerShown: true }} />
       </Stack>
     </ThemeProvider>
   );
