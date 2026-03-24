@@ -1,5 +1,5 @@
 import json
-from openai import AsyncOpenAI
+import httpx
 from aggregator.models import (
     RawContent,
     ClassifiedContent,
@@ -43,25 +43,26 @@ async def classify_content(
 ) -> ClassifiedContent:
     """
     Classify a content item using AI.
-    Falls back to keyword matching if OpenAI is unavailable.
+    Falls back to keyword matching if API is unavailable.
     """
     settings = get_settings()
 
     if settings.openai_api_key:
         try:
-            return await _classify_with_ai(item, interest_map, settings)
+            return await _classify_with_gemini(item, interest_map, settings)
         except Exception as e:
             print(f"AI classification failed, using keywords: {e}")
 
     return _classify_with_keywords(item, interest_map)
 
 
-async def _classify_with_ai(
+async def _classify_with_gemini(
     item: RawContent,
     interest_map: dict[str, str],
     settings,
 ) -> ClassifiedContent:
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
+    """Classify using Google Gemini API with rate limiting."""
+    import asyncio
 
     interests_str = ", ".join(f"{k} ({v})" for k, v in interest_map.items())
 
@@ -74,14 +75,26 @@ async def _classify_with_ai(
         author=item.author or "unknown",
     )
 
-    response = await client.chat.completions.create(
-        model=settings.openai_model,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.1,
-        max_tokens=200,
-    )
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.openai_model}:generateContent?key={settings.openai_api_key}"
 
-    text = response.choices[0].message.content or "{}"
+    # Rate limit: ~15 requests per minute for Gemini free tier
+    await asyncio.sleep(0.5)
+
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        resp = await client.post(
+            url,
+            json={
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "temperature": 0.1,
+                    "maxOutputTokens": 200,
+                },
+            },
+        )
+        resp.raise_for_status()
+        data = resp.json()
+
+    text = data["candidates"][0]["content"]["parts"][0]["text"]
     # Strip markdown code fences if present
     text = text.strip()
     if text.startswith("```"):
