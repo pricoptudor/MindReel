@@ -35,7 +35,7 @@ function SettingsRow({ icon, label, subtitle }: { icon: string; label: string; s
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { interests, feeds, likedIds, savedIds } = useAppStore();
+  const { interests, feeds, likedIds, savedIds, viewedIds } = useAppStore();
 
   return (
     <SafeAreaView className="flex-1 bg-surface-dark" edges={['top']}>
@@ -59,11 +59,19 @@ export default function ProfileScreen() {
           </View>
 
           {/* Stats */}
-          <View className="flex-row mb-6">
+          <View className="flex-row mb-2">
             <StatCard label="Liked" value={String(likedIds.size)} icon="heart" color="#ef4444" />
             <StatCard label="Saved" value={String(savedIds.size)} icon="bookmark" color="#f59e0b" />
             <StatCard label="Feeds" value={String(feeds.length)} icon="layers" color="#818cf8" />
           </View>
+          <Pressable onPress={() => router.push('/stats')}>
+            <View className="bg-surface-card border border-surface-border rounded-2xl py-3 flex-row items-center justify-center mb-6">
+              <Ionicons name="stats-chart" size={16} color="#818cf8" />
+              <Text className="text-brand-400 text-sm font-semibold ml-2">
+                View Knowledge Stats · {viewedIds.size} viewed
+              </Text>
+            </View>
+          </Pressable>
         </View>
 
         {/* Interests section */}

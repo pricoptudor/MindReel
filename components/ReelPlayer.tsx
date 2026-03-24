@@ -1,7 +1,8 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { View, Text, Pressable, Dimensions, FlatList, ViewToken } from 'react-native';
+import { View, Text, Pressable, Dimensions, FlatList, ViewToken, Animated as RNAnimated } from 'react-native';
 import { Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import type { ContentItem } from '@/lib/types';
 import { useAppStore } from '@/lib/store';
 
@@ -13,19 +14,26 @@ interface ReelPlayerProps {
 }
 
 function ReelOverlay({ item }: { item: ContentItem }) {
-  const { likedIds, savedIds, toggleLike, toggleSave, interests } = useAppStore();
+  const { likedIds, savedIds, toggleLike, toggleSave, interests, markViewed } = useAppStore();
   const isLiked = likedIds.has(item.id);
   const isSaved = savedIds.has(item.id);
   const interestData = interests.filter((i) => item.interestIds.includes(i.id));
 
-  return (
-    <View className="absolute inset-0" style={{ height: REEL_HEIGHT }}>
-      {/* Gradient overlay at bottom */}
-      <View className="absolute bottom-0 left-0 right-0 h-72 bg-gradient-to-t from-black/80 to-transparent" />
+  const handleLike = () => {
+    toggleLike(item.id);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
 
+  const handleSave = () => {
+    toggleSave(item.id);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  return (
+    <View className="absolute inset-0" style={{ height: REEL_HEIGHT }} pointerEvents="box-none">
       {/* Right side action buttons */}
-      <View className="absolute right-4 bottom-32 items-center gap-6">
-        <Pressable onPress={() => toggleLike(item.id)} className="items-center">
+      <View className="absolute right-4 bottom-36 items-center gap-6">
+        <Pressable onPress={handleLike} className="items-center">
           <Ionicons
             name={isLiked ? 'heart' : 'heart-outline'}
             size={32}
@@ -34,7 +42,7 @@ function ReelOverlay({ item }: { item: ContentItem }) {
           <Text className="text-white text-xs mt-1">Like</Text>
         </Pressable>
 
-        <Pressable onPress={() => toggleSave(item.id)} className="items-center">
+        <Pressable onPress={handleSave} className="items-center">
           <Ionicons
             name={isSaved ? 'bookmark' : 'bookmark-outline'}
             size={28}
@@ -55,7 +63,7 @@ function ReelOverlay({ item }: { item: ContentItem }) {
       </View>
 
       {/* Bottom content info */}
-      <View className="absolute bottom-24 left-4 right-20">
+      <View className="absolute bottom-28 left-4 right-20">
         {/* Interest tags */}
         <View className="flex-row flex-wrap mb-2">
           {interestData.map((interest) => (
@@ -95,41 +103,78 @@ function ReelOverlay({ item }: { item: ContentItem }) {
 
 export function ReelPlayer({ items }: ReelPlayerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const { toggleLike, markViewed } = useAppStore();
+  const lastTap = useRef(0);
+  const heartAnim = useRef(new RNAnimated.Value(0)).current;
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (viewableItems.length > 0 && viewableItems[0].index !== null) {
         setActiveIndex(viewableItems[0].index);
+        // Mark as viewed
+        const item = items[viewableItems[0].index];
+        if (item) markViewed(item.id);
       }
     },
-    []
+    [items, markViewed]
   );
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 }).current;
 
+  // Double-tap to like
+  const handleTap = useCallback(
+    (item: ContentItem) => {
+      const now = Date.now();
+      if (now - lastTap.current < 300) {
+        // Double tap — like
+        toggleLike(item.id);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+
+        // Animate heart
+        heartAnim.setValue(1);
+        RNAnimated.sequence([
+          RNAnimated.timing(heartAnim, { toValue: 1.3, duration: 150, useNativeDriver: true }),
+          RNAnimated.timing(heartAnim, { toValue: 0, duration: 400, useNativeDriver: true }),
+        ]).start();
+      }
+      lastTap.current = now;
+    },
+    [toggleLike, heartAnim]
+  );
+
   const renderItem = useCallback(
     ({ item, index }: { item: ContentItem; index: number }) => (
-      <View style={{ width: SCREEN_WIDTH, height: REEL_HEIGHT }} className="bg-black relative">
-        {/* Thumbnail as background (will be replaced with video player) */}
-        <Image
-          source={{ uri: item.thumbnailUrl }}
-          style={{ width: SCREEN_WIDTH, height: REEL_HEIGHT }}
-          resizeMode="cover"
-        />
+      <Pressable onPress={() => handleTap(item)}>
+        <View style={{ width: SCREEN_WIDTH, height: REEL_HEIGHT }} className="bg-black relative">
+          <Image
+            source={{ uri: item.thumbnailUrl }}
+            style={{ width: SCREEN_WIDTH, height: REEL_HEIGHT }}
+            resizeMode="cover"
+          />
 
-        {/* Play icon overlay (placeholder for actual video) */}
-        {index === activeIndex && (
-          <View className="absolute inset-0 items-center justify-center">
-            <View className="bg-black/30 rounded-full p-4">
-              <Ionicons name="play" size={48} color="#fff" />
+          {/* Play icon overlay */}
+          {index === activeIndex && (
+            <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
+              <View className="bg-black/30 rounded-full p-4">
+                <Ionicons name="play" size={48} color="#fff" />
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
-        <ReelOverlay item={item} />
-      </View>
+          {/* Double-tap heart animation */}
+          <RNAnimated.View
+            className="absolute inset-0 items-center justify-center"
+            pointerEvents="none"
+            style={{ opacity: heartAnim, transform: [{ scale: heartAnim }] }}
+          >
+            <Ionicons name="heart" size={80} color="#ef4444" />
+          </RNAnimated.View>
+
+          <ReelOverlay item={item} />
+        </View>
+      </Pressable>
     ),
-    [activeIndex]
+    [activeIndex, handleTap, heartAnim]
   );
 
   if (items.length === 0) {

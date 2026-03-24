@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, Pressable, Image, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useAppStore } from '@/lib/store';
 import { InterestPill } from '@/components/InterestPill';
 
@@ -9,6 +10,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.42;
 
 export default function ExploreScreen() {
+  const router = useRouter();
   const { interests, feedContent } = useAppStore();
   const allContent = feedContent['all'] || [];
 
@@ -22,7 +24,7 @@ export default function ExploreScreen() {
         </View>
 
         {/* Search bar */}
-        <Pressable className="mx-4 mb-6">
+        <Pressable className="mx-4 mb-6" onPress={() => router.push('/search')}>
           <View className="flex-row items-center bg-surface-card border border-surface-border rounded-xl px-4 py-3">
             <Ionicons name="search" size={18} color="#6b7280" />
             <Text className="text-gray-500 ml-3 text-sm">Search topics, content, sources...</Text>

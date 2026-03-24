@@ -67,6 +67,8 @@ function RootLayoutNav() {
         <Stack.Screen name="interests/[id]" options={{ headerShown: true }} />
         <Stack.Screen name="feed-config/index" options={{ headerShown: true }} />
         <Stack.Screen name="feed-config/edit" options={{ headerShown: true }} />
+        <Stack.Screen name="search" options={{ headerShown: true }} />
+        <Stack.Screen name="stats" options={{ headerShown: true }} />
       </Stack>
     </ThemeProvider>
   );

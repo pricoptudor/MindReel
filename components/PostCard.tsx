@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, Pressable, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import type { ContentItem, MediaType } from '@/lib/types';
 import { InterestPill } from './InterestPill';
 import { useAppStore } from '@/lib/store';
@@ -49,14 +50,29 @@ interface PostCardProps {
 }
 
 export function PostCard({ item, onPress }: PostCardProps) {
-  const { likedIds, savedIds, toggleLike, toggleSave, interests } = useAppStore();
+  const { likedIds, savedIds, toggleLike, toggleSave, interests, markViewed } = useAppStore();
   const isLiked = likedIds.has(item.id);
   const isSaved = savedIds.has(item.id);
   const mediaInfo = MEDIA_LABELS[item.mediaType];
   const interestData = interests.filter((i) => item.interestIds.includes(i.id));
 
+  const handleLike = () => {
+    toggleLike(item.id);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const handleSave = () => {
+    toggleSave(item.id);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const handlePress = () => {
+    markViewed(item.id);
+    onPress?.();
+  };
+
   return (
-    <Pressable onPress={onPress}>
+    <Pressable onPress={handlePress}>
       <View className="bg-surface-card rounded-2xl mx-3 mb-4 overflow-hidden border border-surface-border">
         {/* Thumbnail */}
         <View className="relative">
@@ -121,14 +137,14 @@ export function PostCard({ item, onPress }: PostCardProps) {
 
             {/* Actions */}
             <View className="flex-row items-center gap-4">
-              <Pressable onPress={() => toggleLike(item.id)} hitSlop={8}>
+              <Pressable onPress={handleLike} hitSlop={8}>
                 <Ionicons
                   name={isLiked ? 'heart' : 'heart-outline'}
                   size={22}
                   color={isLiked ? '#ef4444' : '#9ca3af'}
                 />
               </Pressable>
-              <Pressable onPress={() => toggleSave(item.id)} hitSlop={8}>
+              <Pressable onPress={handleSave} hitSlop={8}>
                 <Ionicons
                   name={isSaved ? 'bookmark' : 'bookmark-outline'}
                   size={20}
