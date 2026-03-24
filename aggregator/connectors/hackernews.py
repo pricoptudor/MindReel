@@ -36,12 +36,15 @@ class HackerNewsConnector(BaseConnector):
                             continue
                     stories.extend(results)
 
-                # Filter by queries (keyword matching in title)
+                # Filter by queries (relaxed keyword matching)
                 query_terms = set()
                 for q in queries:
                     for word in q.lower().split():
                         if len(word) > 2:
                             query_terms.add(word)
+
+                # If no specific queries, take top stories as-is
+                take_all = len(query_terms) == 0
 
                 for story in stories:
                     if not story or story.get("type") != "story":
@@ -52,8 +55,8 @@ class HackerNewsConnector(BaseConnector):
                     title = story.get("title", "")
                     title_lower = title.lower()
 
-                    # Check if story matches any query term
-                    if query_terms and not any(term in title_lower for term in query_terms):
+                    # Check if story matches any query term (or take all if no filters)
+                    if not take_all and query_terms and not any(term in title_lower for term in query_terms):
                         continue
 
                     pub_date = None

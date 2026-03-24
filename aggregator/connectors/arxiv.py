@@ -8,7 +8,7 @@ from .base import BaseConnector
 class ArxivConnector(BaseConnector):
     """Fetches papers from arXiv API."""
 
-    BASE_URL = "http://export.arxiv.org/api/query"
+    BASE_URL = "https://export.arxiv.org/api/query"
 
     # arXiv category mappings for common interests
     CATEGORY_MAP = {

@@ -12,19 +12,21 @@ class RssConnector(BaseConnector):
     # Default RSS feeds for common knowledge topics
     DEFAULT_FEEDS = {
         "quantum": [
-            "https://phys.org/rss-feed/physics-news/quantum-physics/",
             "https://quantumcomputingreport.com/feed/",
         ],
         "ai": [
-            "https://news.mit.edu/topic/artificial-intelligence2-rss.xml",
             "https://blog.google/technology/ai/rss/",
+            "https://openai.com/blog/rss.xml",
         ],
         "astronomy": [
             "https://www.nasa.gov/feed/",
-            "https://phys.org/rss-feed/space-news/",
+            "https://skyandtelescope.org/feed/",
         ],
         "personal growth": [
             "https://jamesclear.com/feed",
+        ],
+        "piano": [
+            "https://www.pianistmagazine.com/feed/",
         ],
     }
 

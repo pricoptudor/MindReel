@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { ContentItem, Feed, FeedFilter, Interest, SubInterest, UserProfile } from './types';
 import { mockInterests, mockFeeds, mockContent } from './mock-data';
 import { buildFeed, buildReelsFeed } from './services/feed-algorithm';
+import { fetchRealInterests, fetchRealFeeds, fetchRealContent } from './services/supabase-loader';
 
 interface AppState {
   // User
@@ -136,14 +137,39 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
-  initMockData: () =>
-    set((state) => {
-      const reels = buildReelsFeed(mockContent, { viewedIds: state.viewedIds });
-      return {
+  initMockData: () => {
+    // Try loading real data from Supabase first
+    Promise.all([
+      fetchRealInterests(),
+      fetchRealFeeds(),
+      fetchRealContent(),
+    ]).then(([realInterests, realFeeds, realContent]) => {
+      const hasReal = realInterests && realContent;
+      const interests = realInterests || mockInterests;
+      const feeds = realFeeds || mockFeeds;
+      const content = realContent || mockContent;
+      const reels = buildReelsFeed(content);
+
+      if (hasReal) {
+        console.log(`Loaded ${content.length} real items from Supabase`);
+      } else {
+        console.log('Using mock data (Supabase not configured or empty)');
+      }
+
+      set({
+        interests,
+        feeds,
+        feedContent: { all: content },
+        reelsContent: reels,
+      });
+    }).catch(() => {
+      // Fallback to mock data on any error
+      set({
         interests: mockInterests,
         feeds: mockFeeds,
         feedContent: { all: mockContent },
-        reelsContent: reels,
-      };
-    }),
+        reelsContent: buildReelsFeed(mockContent),
+      });
+    });
+  },
 }));
