@@ -1,3 +1,3 @@
-from .classify import classify_content
+from .classify import classify_content, classify_content_batch
 
-__all__ = ["classify_content"]
+__all__ = ["classify_content", "classify_content_batch"]

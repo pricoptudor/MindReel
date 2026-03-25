@@ -23,7 +23,7 @@ from aggregator.connectors import (
     WikipediaConnector,
     PodcastConnector,
 )
-from aggregator.classifier import classify_content
+from aggregator.classifier import classify_content, classify_content_batch
 from aggregator.storage import store_content, fetch_user_interests, fetch_user_sub_interests
 
 app = FastAPI(
@@ -114,15 +114,13 @@ async def aggregate(
             raw_items = await connector.fetch(queries, request.max_items_per_source)
             result.fetched = len(raw_items)
 
-            # Classify
-            classified = []
-            for item in raw_items:
-                try:
-                    c = await classify_content(item, interests)
-                    if c.interest_ids and c.confidence >= 0.4:
-                        classified.append(c)
-                except Exception as e:
-                    result.errors.append(f"Classify error: {str(e)[:100]}")
+            # Classify in batch (much fewer API calls)
+            try:
+                all_classified = await classify_content_batch(raw_items, interests)
+                classified = [c for c in all_classified if c.interest_ids and c.confidence >= 0.4]
+            except Exception as e:
+                result.errors.append(f"Batch classify error: {str(e)[:100]}")
+                classified = []
             result.classified = len(classified)
 
             # Store
