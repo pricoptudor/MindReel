@@ -1,12 +1,17 @@
 {
   "cli": {
-    "version": ">= 18.0.0"
+    "version": ">= 18.0.0",
+    "appVersionSource": "local"
   },
   "build": {
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://jkoltknpqhftcynfedpz.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imprb2x0a25wcWhmdGN5bmZlZHB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNjA0MjUsImV4cCI6MjA4OTkzNjQyNX0.Ldzcfr7z_jlwx9gP5rD4MQ0IgfQwjwndyMCATakonbk"
       }
     },
     "production": {
