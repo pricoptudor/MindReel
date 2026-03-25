@@ -26,7 +26,7 @@ class RssConnector(BaseConnector):
             "https://jamesclear.com/feed",
         ],
         "piano": [
-            "https://www.pianistmagazine.com/feed/",
+            "https://www.pianostreetstyle.com/feed/",
         ],
     }
 
