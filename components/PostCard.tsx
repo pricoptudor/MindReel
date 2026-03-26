@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import type { ContentItem, MediaType } from '@/lib/types';
 import { InterestPill } from './InterestPill';
+import { PlaceholderThumbnail } from './PlaceholderThumbnail';
 import { useAppStore } from '@/lib/store';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -79,12 +80,23 @@ export function PostCard({ item, onPress }: PostCardProps) {
       <View className="bg-surface-card rounded-2xl mx-3 mb-4 overflow-hidden border border-surface-border">
         {/* Thumbnail */}
         <View className="relative">
-          <Image
-            source={{ uri: item.thumbnailUrl }}
-            className="w-full"
-            style={{ height: SCREEN_WIDTH * 0.56 }}
-            resizeMode="cover"
-          />
+          {item.thumbnailUrl ? (
+            <Image
+              source={{ uri: item.thumbnailUrl }}
+              className="w-full"
+              style={{ height: SCREEN_WIDTH * 0.56 }}
+              resizeMode="cover"
+            />
+          ) : (
+            <PlaceholderThumbnail
+              source={item.source}
+              mediaType={item.mediaType}
+              title={item.title}
+              interestColor={interestData[0]?.color}
+              width={SCREEN_WIDTH - 24}
+              height={SCREEN_WIDTH * 0.56}
+            />
+          )}
           {/* Media type badge */}
           <View
             className="absolute top-3 left-3 px-2 py-1 rounded-md"

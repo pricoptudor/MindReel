@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '@/lib/store';
 import { InterestPill } from '@/components/InterestPill';
+import { PlaceholderThumbnail } from '@/components/PlaceholderThumbnail';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.42;
@@ -97,11 +98,22 @@ export default function ExploreScreen() {
                 {interestContent.map((item) => (
                   <Pressable key={item.id} className="mr-3" onPress={() => { if (item.url) Linking.openURL(item.url); }}>
                     <View className="rounded-xl overflow-hidden bg-surface-card border border-surface-border" style={{ width: CARD_WIDTH }}>
-                      <Image
-                        source={{ uri: item.thumbnailUrl }}
-                        style={{ width: CARD_WIDTH, height: CARD_WIDTH * 1.2 }}
-                        resizeMode="cover"
-                      />
+                      {item.thumbnailUrl ? (
+                        <Image
+                          source={{ uri: item.thumbnailUrl }}
+                          style={{ width: CARD_WIDTH, height: CARD_WIDTH * 1.2 }}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <PlaceholderThumbnail
+                          source={item.source}
+                          mediaType={item.mediaType}
+                          title={item.title}
+                          interestColor={interest.color}
+                          width={CARD_WIDTH}
+                          height={CARD_WIDTH * 1.2}
+                        />
+                      )}
                       <View className="p-2.5">
                         <Text className="text-white text-xs font-semibold" numberOfLines={2}>
                           {item.title}

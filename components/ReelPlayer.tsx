@@ -3,11 +3,18 @@ import { View, Text, Pressable, Dimensions, FlatList, ViewToken, Animated as RNA
 import { Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import YoutubePlayer from 'react-native-youtube-iframe';
 import type { ContentItem } from '@/lib/types';
 import { useAppStore } from '@/lib/store';
+import { PlaceholderThumbnail } from './PlaceholderThumbnail';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const REEL_HEIGHT = SCREEN_HEIGHT;
+
+function extractYouTubeId(url: string): string | null {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : null;
+}
 
 interface ReelPlayerProps {
   items: ContentItem[];
@@ -147,37 +154,75 @@ export function ReelPlayer({ items }: ReelPlayerProps) {
   );
 
   const renderItem = useCallback(
-    ({ item, index }: { item: ContentItem; index: number }) => (
-      <Pressable onPress={() => handleTap(item)}>
-        <View style={{ width: SCREEN_WIDTH, height: REEL_HEIGHT }} className="bg-black relative">
-          <Image
-            source={{ uri: item.thumbnailUrl }}
-            style={{ width: SCREEN_WIDTH, height: REEL_HEIGHT }}
-            resizeMode="cover"
-          />
+    ({ item, index }: { item: ContentItem; index: number }) => {
+      const isActive = index === activeIndex;
+      const ytId = item.source === 'youtube' ? extractYouTubeId(item.url) : null;
 
-          {/* Play icon overlay */}
-          {index === activeIndex && (
-            <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
-              <View className="bg-black/30 rounded-full p-4">
-                <Ionicons name="play" size={48} color="#fff" />
+      return (
+        <Pressable onPress={() => handleTap(item)}>
+          <View style={{ width: SCREEN_WIDTH, height: REEL_HEIGHT }} className="bg-black relative">
+            {/* Video player for YouTube, thumbnail for others */}
+            {ytId && isActive ? (
+              <View className="absolute inset-0" style={{ top: REEL_HEIGHT * 0.15 }}>
+                <YoutubePlayer
+                  height={SCREEN_WIDTH * (16 / 9) * 0.55}
+                  width={SCREEN_WIDTH}
+                  videoId={ytId}
+                  play={isActive}
+                  webViewProps={{
+                    injectedJavaScript: `
+                      document.body.style.backgroundColor = 'black';
+                      true;
+                    `,
+                  }}
+                />
               </View>
-            </View>
-          )}
+            ) : null}
 
-          {/* Double-tap heart animation */}
-          <RNAnimated.View
-            className="absolute inset-0 items-center justify-center"
-            pointerEvents="none"
-            style={{ opacity: heartAnim, transform: [{ scale: heartAnim }] }}
-          >
-            <Ionicons name="heart" size={80} color="#ef4444" />
-          </RNAnimated.View>
+            {/* Background thumbnail (shows when video isn't playing) */}
+            {(!ytId || !isActive) && (
+              item.thumbnailUrl ? (
+                <Image
+                  source={{ uri: item.thumbnailUrl }}
+                  style={{ width: SCREEN_WIDTH, height: REEL_HEIGHT }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <PlaceholderThumbnail
+                  source={item.source}
+                  mediaType={item.mediaType}
+                  title={item.title}
+                  width={SCREEN_WIDTH}
+                  height={REEL_HEIGHT}
+                />
+              )
+            )}
 
-          <ReelOverlay item={item} />
-        </View>
-      </Pressable>
-    ),
+            {/* Play hint for non-YouTube content */}
+            {!ytId && isActive && (
+              <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
+                <Pressable onPress={() => { if (item.url) Linking.openURL(item.url); }}>
+                  <View className="bg-black/40 rounded-full p-5">
+                    <Ionicons name="open-outline" size={40} color="#fff" />
+                  </View>
+                </Pressable>
+              </View>
+            )}
+
+            {/* Double-tap heart animation */}
+            <RNAnimated.View
+              className="absolute inset-0 items-center justify-center"
+              pointerEvents="none"
+              style={{ opacity: heartAnim, transform: [{ scale: heartAnim }] }}
+            >
+              <Ionicons name="heart" size={80} color="#ef4444" />
+            </RNAnimated.View>
+
+            <ReelOverlay item={item} />
+          </View>
+        </Pressable>
+      );
+    },
     [activeIndex, handleTap, heartAnim]
   );
 
