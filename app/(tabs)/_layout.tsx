@@ -2,12 +2,14 @@ import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme() ?? 'dark';
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -18,9 +20,9 @@ export default function TabLayout() {
           backgroundColor: colorScheme === 'dark' ? '#16161f' : '#fff',
           borderTopColor: colorScheme === 'dark' ? '#2a2a3d' : '#e5e7eb',
           borderTopWidth: 0.5,
-          height: Platform.OS === 'android' ? 60 : 85,
-          paddingBottom: Platform.OS === 'android' ? 8 : 28,
-          paddingTop: 8,
+          height: 56 + insets.bottom,
+          paddingBottom: insets.bottom,
+          paddingTop: 6,
         },
         headerShown: false,
       }}>

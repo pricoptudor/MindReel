@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { View, Text, Pressable, Dimensions, FlatList, ViewToken, Animated as RNAnimated } from 'react-native';
+import { View, Text, Pressable, Dimensions, FlatList, ViewToken, Animated as RNAnimated, Linking, Share } from 'react-native';
 import { Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -51,12 +51,16 @@ function ReelOverlay({ item }: { item: ContentItem }) {
           <Text className="text-white text-xs mt-1">Save</Text>
         </Pressable>
 
-        <Pressable className="items-center">
+        <Pressable className="items-center" onPress={() => {
+          if (item.url) Share.share({ message: `${item.title}\n${item.url}` });
+        }}>
           <Ionicons name="share-outline" size={28} color="#fff" />
           <Text className="text-white text-xs mt-1">Share</Text>
         </Pressable>
 
-        <Pressable className="items-center">
+        <Pressable className="items-center" onPress={() => {
+          if (item.url) Linking.openURL(item.url);
+        }}>
           <Ionicons name="open-outline" size={28} color="#fff" />
           <Text className="text-white text-xs mt-1">Open</Text>
         </Pressable>

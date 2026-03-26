@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, Pressable, Dimensions } from 'react-native';
+import { View, Text, Image, Pressable, Dimensions, Linking, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import type { ContentItem, MediaType } from '@/lib/types';
@@ -68,6 +68,9 @@ export function PostCard({ item, onPress }: PostCardProps) {
 
   const handlePress = () => {
     markViewed(item.id);
+    if (item.url) {
+      Linking.openURL(item.url);
+    }
     onPress?.();
   };
 
@@ -151,7 +154,9 @@ export function PostCard({ item, onPress }: PostCardProps) {
                   color={isSaved ? '#f59e0b' : '#9ca3af'}
                 />
               </Pressable>
-              <Pressable hitSlop={8}>
+              <Pressable hitSlop={8} onPress={() => {
+                if (item.url) Share.share({ message: `${item.title}\n${item.url}` });
+              }}>
                 <Ionicons name="share-outline" size={20} color="#9ca3af" />
               </Pressable>
             </View>

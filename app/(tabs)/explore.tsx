@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, Pressable, Image, Dimensions } from 'react-native';
+import { View, Text, ScrollView, Pressable, Image, Dimensions, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -40,7 +40,7 @@ export default function ExploreScreen() {
             contentContainerStyle={{ paddingHorizontal: 16 }}
           >
             {interests.map((interest) => (
-              <Pressable key={interest.id} className="mr-3">
+              <Pressable key={interest.id} className="mr-3" onPress={() => router.push(`/interests/${interest.id}`)}>
                 <View
                   className="rounded-2xl p-4 items-center justify-center"
                   style={{
@@ -60,7 +60,7 @@ export default function ExploreScreen() {
             ))}
 
             {/* Add interest */}
-            <Pressable>
+            <Pressable onPress={() => router.push('/interests/edit')}>
               <View className="rounded-2xl p-4 items-center justify-center border border-dashed border-surface-border" style={{ width: 100, height: 100 }}>
                 <Ionicons name="add-circle-outline" size={28} color="#6b7280" />
                 <Text className="text-gray-500 text-xs mt-2">Add New</Text>
@@ -84,7 +84,7 @@ export default function ExploreScreen() {
                   />
                   <Text className="text-white text-lg font-bold">{interest.name}</Text>
                 </View>
-                <Pressable>
+                <Pressable onPress={() => router.push(`/feed/${interest.id}`)}>
                   <Text className="text-brand-400 text-sm">See all</Text>
                 </Pressable>
               </View>
@@ -95,7 +95,7 @@ export default function ExploreScreen() {
                 contentContainerStyle={{ paddingHorizontal: 16 }}
               >
                 {interestContent.map((item) => (
-                  <Pressable key={item.id} className="mr-3">
+                  <Pressable key={item.id} className="mr-3" onPress={() => { if (item.url) Linking.openURL(item.url); }}>
                     <View className="rounded-xl overflow-hidden bg-surface-card border border-surface-border" style={{ width: CARD_WIDTH }}>
                       <Image
                         source={{ uri: item.thumbnailUrl }}
