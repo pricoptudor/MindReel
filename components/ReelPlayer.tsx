@@ -1,8 +1,9 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { View, Text, Pressable, Dimensions, FlatList, ViewToken, Animated as RNAnimated, Linking, Share } from 'react-native';
+import { View, Text, Pressable, Dimensions, FlatList, ViewToken, Animated as RNAnimated, Share } from 'react-native';
 import { Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as WebBrowser from 'expo-web-browser';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import type { ContentItem } from '@/lib/types';
 import { useAppStore } from '@/lib/store';
@@ -66,7 +67,7 @@ function ReelOverlay({ item }: { item: ContentItem }) {
         </Pressable>
 
         <Pressable className="items-center" onPress={() => {
-          if (item.url) Linking.openURL(item.url);
+          if (item.url) WebBrowser.openBrowserAsync(item.url);
         }}>
           <Ionicons name="open-outline" size={28} color="#fff" />
           <Text className="text-white text-xs mt-1">Open</Text>
@@ -161,21 +162,34 @@ export function ReelPlayer({ items }: ReelPlayerProps) {
       return (
         <Pressable onPress={() => handleTap(item)}>
           <View style={{ width: SCREEN_WIDTH, height: REEL_HEIGHT }} className="bg-black relative">
-            {/* Video player for YouTube, thumbnail for others */}
+            {/* YouTube video player - centered with blurred background */}
             {ytId && isActive ? (
-              <View className="absolute inset-0" style={{ top: REEL_HEIGHT * 0.15 }}>
-                <YoutubePlayer
-                  height={SCREEN_WIDTH * (16 / 9) * 0.55}
-                  width={SCREEN_WIDTH}
-                  videoId={ytId}
-                  play={isActive}
-                  webViewProps={{
-                    injectedJavaScript: `
-                      document.body.style.backgroundColor = 'black';
-                      true;
-                    `,
-                  }}
-                />
+              <View className="absolute inset-0">
+                {/* Blurred thumbnail background */}
+                {item.thumbnailUrl ? (
+                  <Image
+                    source={{ uri: item.thumbnailUrl }}
+                    style={{ width: SCREEN_WIDTH, height: REEL_HEIGHT }}
+                    resizeMode="cover"
+                    blurRadius={25}
+                  />
+                ) : (
+                  <View className="flex-1 bg-black" />
+                )}
+                {/* Dark overlay on blur */}
+                <View className="absolute inset-0 bg-black/50" />
+                {/* Centered video player */}
+                <View className="absolute inset-0 justify-center">
+                  <YoutubePlayer
+                    height={SCREEN_WIDTH * 0.5625}
+                    width={SCREEN_WIDTH}
+                    videoId={ytId}
+                    play={isActive}
+                    webViewProps={{
+                      injectedJavaScript: `document.body.style.backgroundColor = 'black'; true;`,
+                    }}
+                  />
+                </View>
               </View>
             ) : null}
 
@@ -198,10 +212,10 @@ export function ReelPlayer({ items }: ReelPlayerProps) {
               )
             )}
 
-            {/* Play hint for non-YouTube content */}
+            {/* Tap to open for non-YouTube content */}
             {!ytId && isActive && (
-              <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
-                <Pressable onPress={() => { if (item.url) Linking.openURL(item.url); }}>
+              <View className="absolute inset-0 items-center justify-center" pointerEvents="box-none">
+                <Pressable onPress={() => { if (item.url) WebBrowser.openBrowserAsync(item.url); }}>
                   <View className="bg-black/40 rounded-full p-5">
                     <Ionicons name="open-outline" size={40} color="#fff" />
                   </View>

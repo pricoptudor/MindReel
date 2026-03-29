@@ -61,20 +61,37 @@ export async function fetchRealFeeds(): Promise<Feed[] | null> {
 export async function fetchRealContent(): Promise<ContentItem[] | null> {
   if (!SUPABASE_CONFIGURED) return null;
   try {
-    // Use the feed_content view that joins content_items with content_tags
-    const { data, error } = await supabase
-      .from('feed_content')
+    // Fetch content items and tags separately for reliability
+    const { data: items, error: itemsErr } = await supabase
+      .from('content_items')
       .select('*')
       .order('published_at', { ascending: false })
-      .limit(100);
+      .limit(200);
 
-    if (error || !data?.length) return null;
+    if (itemsErr || !items?.length) return null;
 
-    // Group by content id (one item may have multiple tags/interests)
-    const map = new Map<string, ContentItem>();
-    for (const row of data) {
-      if (!map.has(row.id)) {
-        map.set(row.id, {
+    const { data: tags } = await supabase
+      .from('content_tags')
+      .select('content_id, interest_id, level, focus');
+
+    // Build interest map per content
+    const tagMap = new Map<string, { interestIds: string[]; level: string; focus: string }>();
+    for (const tag of tags || []) {
+      if (!tagMap.has(tag.content_id)) {
+        tagMap.set(tag.content_id, { interestIds: [tag.interest_id], level: tag.level, focus: tag.focus });
+      } else {
+        const entry = tagMap.get(tag.content_id)!;
+        if (!entry.interestIds.includes(tag.interest_id)) {
+          entry.interestIds.push(tag.interest_id);
+        }
+      }
+    }
+
+    return items
+      .filter((row: any) => tagMap.has(row.id))
+      .map((row: any) => {
+        const t = tagMap.get(row.id)!;
+        return {
           id: row.id,
           source: row.source_type,
           sourceId: row.source_id,
@@ -87,19 +104,11 @@ export async function fetchRealContent(): Promise<ContentItem[] | null> {
           author: row.author || '',
           publishedAt: row.published_at || new Date().toISOString(),
           fetchedAt: row.fetched_at,
-          interestIds: [row.interest_id],
-          level: row.level,
-          focus: row.focus,
-        });
-      } else {
-        const existing = map.get(row.id)!;
-        if (!existing.interestIds.includes(row.interest_id)) {
-          existing.interestIds.push(row.interest_id);
-        }
-      }
-    }
-
-    return Array.from(map.values());
+          interestIds: t.interestIds,
+          level: t.level as any,
+          focus: t.focus as any,
+        };
+      });
   } catch {
     return null;
   }

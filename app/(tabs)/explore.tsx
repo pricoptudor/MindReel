@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, ScrollView, Pressable, Image, Dimensions, Linking } from 'react-native';
+import { View, Text, ScrollView, Pressable, Image, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useAppStore } from '@/lib/store';
 import { InterestPill } from '@/components/InterestPill';
 import { PlaceholderThumbnail } from '@/components/PlaceholderThumbnail';
@@ -96,7 +97,7 @@ export default function ExploreScreen() {
                 contentContainerStyle={{ paddingHorizontal: 16 }}
               >
                 {interestContent.map((item) => (
-                  <Pressable key={item.id} className="mr-3" onPress={() => { if (item.url) Linking.openURL(item.url); }}>
+                  <Pressable key={item.id} className="mr-3" onPress={() => { if (item.url) WebBrowser.openBrowserAsync(item.url); }}>
                     <View className="rounded-xl overflow-hidden bg-surface-card border border-surface-border" style={{ width: CARD_WIDTH }}>
                       {item.thumbnailUrl ? (
                         <Image

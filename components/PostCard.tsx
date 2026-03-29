@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, Image, Pressable, Dimensions, Linking, Share } from 'react-native';
+import { View, Text, Image, Pressable, Dimensions, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as WebBrowser from 'expo-web-browser';
 import type { ContentItem, MediaType } from '@/lib/types';
 import { InterestPill } from './InterestPill';
 import { PlaceholderThumbnail } from './PlaceholderThumbnail';
@@ -70,7 +71,9 @@ export function PostCard({ item, onPress }: PostCardProps) {
   const handlePress = () => {
     markViewed(item.id);
     if (item.url) {
-      Linking.openURL(item.url);
+      WebBrowser.openBrowserAsync(item.url, {
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+      });
     }
     onPress?.();
   };
